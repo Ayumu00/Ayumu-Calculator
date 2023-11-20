@@ -1,207 +1,102 @@
-// Operations and Numbers Button
-const buttonNumbers = Array.from(document.querySelectorAll("[data-number]"))
-const operations = Array.from(document.querySelectorAll("[data-operation]"))
-
-// Display
-const currentDisplay = document.querySelector(".current")
-const prevDisplay = document.querySelector(".prev")
-
-// Special Buttons
-const buttonAC = document.querySelector("[data-clear]")
-const buttonSquare = document.querySelector("[data-square]")
-const buttonDelete = document.querySelector("[data-delete]")
-const buttonNeg = document.querySelector("[data-negation]")
-const buttonCompute = document.querySelector("[data-equals]")
-
-// Select All Button
-const allButton = document.querySelectorAll("button")
-
-// Functions
-function determineOperation(){
-    if (prevDisplay.innerText.includes("+")){
-            addition()
-    } else if (prevDisplay.innerText.includes("-")){
-            subtraction()
-    } else if (prevDisplay.innerText.includes("÷")){
-            division()
-    } else if (prevDisplay.innerText.includes("x")){
-            multiplication()
-    }
+const EDIT = (a=prevNum,b=prev,c=curr,d=isOperation) => {
+    prevNum = a;
+    prev = b;
+    curr = c;
+    isOperation = d;
+    PREV.innerText = prev;
+    CURR.innerText = curr;
 }
 
-function addition(){
-    if(currentDisplay.innerText != "" && prevDisplay.innerText == ""){
-        prevDisplay.innerText = currentDisplay.innerText + " +"
-        currentDisplay.innerText = ""
-    } else if(prevDisplay.innerText.includes("+") && currentDisplay.innerText != ""){
-        currentDisplay.innerText = Number(prevDisplay.innerText.split(" ")[0]) + Number(currentDisplay.innerText)
-        prevDisplay.innerText = ""
-    } else {
-        determineOperation()
-    }
-}
+const CALC = (x) => {
+    if(["+","-","x","÷"].includes(x)) {
+        if(!isOperation) {
+            EDIT(curr,`${curr} ${x}`,"0",true);
+            return;
+        } else {
+            return;
+        };
+    };
 
-function subtraction(){
-    if(currentDisplay.innerText != "" && prevDisplay.innerText == ""){
-        prevDisplay.innerText = currentDisplay.innerText + " -"
-        currentDisplay.innerText = ""
-    } else if(prevDisplay.innerText.includes("-") && currentDisplay.innerText != ""){
-        currentDisplay.innerText = Number(prevDisplay.innerText.split(" ")[0]) - Number(currentDisplay.innerText)
-        prevDisplay.innerText = ""
-    } else {
-        determineOperation()
-    }
-}
-
-function multiplication(){
-    if(currentDisplay.innerText != "" && prevDisplay.innerText == ""){
-        prevDisplay.innerText = currentDisplay.innerText + " x"
-        currentDisplay.innerText = ""
-    } else if(prevDisplay.innerText.includes("x") && currentDisplay.innerText != ""){
-        currentDisplay.innerText = Number(prevDisplay.innerText.split(" ")[0]) * Number(currentDisplay.innerText)
-        prevDisplay.innerText = ""
-    } else {
-        determineOperation()
-    }
-}
-
-function division(){
-    if(currentDisplay.innerText != "" && prevDisplay.innerText == ""){
-        prevDisplay.innerText = currentDisplay.innerText + " ÷"
-        currentDisplay.innerText = ""
-    } else if(prevDisplay.innerText.includes("÷") && currentDisplay.innerText != ""){
-        currentDisplay.innerText = Number(prevDisplay.innerText.split(" ")[0]) / Number(currentDisplay.innerText)
-        prevDisplay.innerText = ""
-        if (!Number.isFinite(Number(prevDisplay.innerText.split(" ")[0]) / Number(currentDisplay.innerText))){
-            currentDisplay.innerText = "Math Error!"
-            prevDisplay.innerText = ""
-        }
-    } else {
-        determineOperation()
-    }
-}
-
-function operationFunction(e){
-    switch (this.innerText) {
-        case "+":
-            addition()
-            break
-        case "-":
-            subtraction()
-            break
-        case "÷":
-            division()
-            break
-        case "x":
-            multiplication()
-            break
-    }
-}
-
-function captureButton(e){
-    if (currentDisplay.innerText.includes(".")){
-        if (this.innerText != "."){
-            currentDisplay.innerText += this.innerText
-        }
-    } else {
-        currentDisplay.innerText += this.innerText
-    }
-    
-}   
-
-function specialButtonFunc(e){
-    switch (this.innerText){
-        case "CLEAR":
-            currentDisplay.innerText = "0"
-            prevDisplay.innerText = ""
-            break
-        case "←":
-            currentDisplay.innerText = currentDisplay.innerText.slice(0,-1)
-            break
-        case "√":
-            prevDisplay.innerText = ""
-            currentDisplay.innerText = Math.sqrt(Number(currentDisplay.innerText)).toFixed(4)
-            break
+    switch(x) {
         case "+/-":
-            currentDisplay.innerText = Number(currentDisplay.innerText) * -1
-            break
-        case "=":
-            if (prevDisplay.innerText.includes("+")){
-                addition()
-            } else if (prevDisplay.innerText.includes("-")) {
-                subtraction()
-            } else if (prevDisplay.innerText.includes("÷")) {
-                division()
-            } else if (prevDisplay.innerText.includes("x")) {
-                multiplication()
+            negation = parseFloat(curr) * -1;
+            EDIT(negation,prev,negation.toString());
+            break;
+        case ".":
+            !curr.includes(".") && EDIT(prevNum,prev,curr+="."); 
+            break;
+        case "CLEAR":
+            EDIT(0,"","0",false);
+            break;
+        case "←":
+            if(curr.length == 1 || curr.match(/^\-\d$/)) {
+                EDIT(prevNum,prev,"0");
+            } else {
+                EDIT(prevNum,prev,curr.slice(0,-1));
             }
-            checkLengthDisplay()
-            break
-    }
-}
+            break;
+        case "√":
+            EDIT(prevNum,prev,(parseFloat(curr) ** 0.5).toString());
+            break;
+        case "=":
+            let result = 0;
+            if(prev.includes("+")) {
+                result = parseFloat(prevNum) + parseFloat(curr);
+            } else if(prev.includes("-")){
+                result = parseFloat(prevNum) - parseFloat(curr);
+            } else if(prev.includes("x")) {
+                result = parseFloat(prevNum) * parseFloat(curr);
+            } else if(prev.includes("÷")) {
+                result = parseFloat(prevNum) / parseFloat(curr);
+            } else {
+                break;
+            };
+            EDIT(0,"",result.toString(),false);
+            break;
+        default:
+            EDIT(prevNum,prev,curr+=x);
+    };
+};
 
-function timeOutEvent(){
-    currentDisplay.innerText = ""
-    prevDisplay.innerText = ""
-}
+const BUTTON_ROWS = (x) => {
+    switch(x) {
+        case 1:
+            return [4,8];
+        case 2:
+            return [8,12];
+        case 3:
+            return [12,16];
+        case 4:
+            return [16,20];
+        default:
+            return [0,4];
+    };
+};
 
-function checkLengthDisplay(){
-    if((currentDisplay.innerText.length >= 18 && currentDisplay.innerText.length <= 49) || (prevDisplay.innerText.length >= 18 && currentDisplay.innerText.length <= 49)){
-        currentDisplay.style.cssText = "font-size:30px"
-        prevDisplay.style.cssText = "font-size:30px"
-    } else if ((currentDisplay.innerText.length >= 49 && currentDisplay.innerText.length <= 53) || (prevDisplay.innerText.length >= 49 && currentDisplay.innerText.length <= 53)){
-        currentDisplay.style.cssText = "font-size:20px"
-        prevDisplay.style.cssText = "font-size:20px"
-    } else if ((currentDisplay.innerText.length >= 0 && currentDisplay.innerText.length <= 17) || (prevDisplay.innerText.length >= 0 && prevDisplay.innerText.length <= 17)){
-        currentDisplay.style.cssText = "font-size:40px"
-        prevDisplay.style.cssText = "font-size:40px"
-    }
-    
-    if (currentDisplay.innerText.length >= 53) {
-        currentDisplay.innerText = currentDisplay.innerText.slice(0,-1)
-    }
+let prevNum;
+let prev = "";
+let curr = "0";
+let isOperation = false;
 
-    if (prevDisplay.innerText.length >= 53){
-        prevDisplay.style.cssText = "font-size:20px"
-    }
+const BTN = [
+    "CLEAR","←","√","+",
+    "7","8","9","-",
+    "4","5","6","x",
+    "1","2","3","÷",
+    "+/-","0",".","="
+];
 
-    if (currentDisplay.innerText == "Infinity"||currentDisplay.innerText == "Math Error!"){
-        setTimeout(timeOutEvent,2000)
-    }
+const BUTTON_CONTAINER = document.querySelectorAll("article")[1];
+const PREV = document.querySelectorAll("li")[1];
+const CURR = document.querySelectorAll("li")[2];
 
-    if (currentDisplay.innerText == "NaN"){
-        currentDisplay.innerText = ""
-        prevDisplay.innerText = ""
-    }
-}
-
-function removeTransition(e){
-    e.target.classList.remove("button-transition");
-}
-
-function transitionButtonStart(){
-    this.classList.add("button-transition")
-}
-
-buttonNumbers.map(button => button.addEventListener("click",captureButton))
-operations.map(button => button.addEventListener("click", operationFunction))
-
-buttonAC.addEventListener("click",specialButtonFunc)
-buttonSquare.addEventListener("click",specialButtonFunc)
-buttonDelete.addEventListener("click",specialButtonFunc)
-buttonNeg.addEventListener("click",specialButtonFunc)
-buttonCompute.addEventListener("click",specialButtonFunc)
-
-// Transition Button - Start - End
-allButton.forEach(buttonS => {
-    buttonS.addEventListener("click",transitionButtonStart)
-})
-
-allButton.forEach(buttonE => {
-    buttonE.addEventListener("transitionend",removeTransition)
-})
-
-// Check Length Function to All Button
-allButton.forEach(buttonAll => {
-    buttonAll.addEventListener("click",checkLengthDisplay)
-})
+for(i=0;i<5;i++){
+    const ROW = document.createElement("div");
+    for(k=BUTTON_ROWS(i)[0];k<BUTTON_ROWS(i)[1];k++){
+        const BUTTON = document.createElement("button");
+        BUTTON.innerText = BTN[k];
+        BUTTON.addEventListener("click", (e) => CALC(e.target.textContent));
+        ROW.appendChild(BUTTON);
+    };
+    BUTTON_CONTAINER.appendChild(ROW);
+};
